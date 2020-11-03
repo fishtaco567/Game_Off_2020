@@ -58,6 +58,7 @@ public class PlayerController : FallBody {
     [SerializeField]
     Animator animator;
 
+    [SerializeField]
     bool onTheGround;
 
     bool lostControl;
@@ -121,6 +122,8 @@ public class PlayerController : FallBody {
     }
 
     protected override void FixedUpdate() {
+        base.FixedUpdate();
+
         if(nearestBody != null) {
             normal = nearestBody.NormalFor(transform.position);
 
@@ -251,8 +254,10 @@ public class PlayerController : FallBody {
 		lostControl = true;
 	}
 
-	void OnCollisionEnter(Collision bonk) {
+	void OnCollisionEnter(Collision collision) {
         animator.SetBool("Land", true);
+        onTheGround = true;
+        jumped = false;
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -272,7 +277,7 @@ public class PlayerController : FallBody {
         onSlope = os;
     }
 
-    private void OnCollisionExit(Collision bonk2ElectricBoogaloo) {
+    private void OnCollisionExit(Collision collision) {
         onTheGround = false;
         onSlope = false;
     }
