@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Rewired;
 
 public class PlayerController : FallBody {
 	
@@ -59,12 +60,17 @@ public class PlayerController : FallBody {
     Animator animator;
 
     [SerializeField]
+    float jumpTolerance;
+
+    float jumpRaycastLength;
+
     bool onTheGround;
 
     bool lostControl;
 	float lostControlTime;
     
     //TODO Better Jump
+    [SerializeField]
     bool jumped;
 
     bool onSlope = false;
@@ -79,6 +85,17 @@ public class PlayerController : FallBody {
     AudioSource landAudioSource;
 
     AudioSource collectAudioSource;
+
+    private Player playerInput;
+
+    private PlayerAbility ability;
+
+    private int numUsedJumps;
+
+    //Input
+    private bool jumpInput;
+    private float horizontalIn;
+    private float verticalIn;
 
     public GameObject RaycastDown {
         get {
@@ -119,6 +136,14 @@ public class PlayerController : FallBody {
 
         collectAudioSource = gameObject.AddComponent<AudioSource>();
         collectAudioSource.clip = collectSFX;
+
+        //Get the player
+        playerInput = ReInput.players.GetPlayer(0);
+
+        //Calculate jump tolerance assuming capsule collider
+        jumpRaycastLength = GetComponent<CapsuleCollider>().height / 2 + jumpTolerance;
+
+        ability = GetComponent<PlayerAbility>();
     }
 
     protected override void FixedUpdate() {
@@ -135,11 +160,6 @@ public class PlayerController : FallBody {
             }
         }
 
-        //TODO Redo with rewired
-        bool jumpInput = Input.GetButtonDown("Jump");
-        float verticalIn = Input.GetAxis("Vertical");
-        float horizontalIn = Input.GetAxis("Horizontal");
-
         //Lose control when damaged
         if (lostControl) {
             lostControlTime -= Time.fixedDeltaTime;
@@ -153,7 +173,13 @@ public class PlayerController : FallBody {
             }
         }
 
-        if (!jumped && jumpInput) {
+        bool grounded = CheckJump();
+
+        if ((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpInput) {
+            if(!grounded) {
+                numUsedJumps++;
+            }
+
             jumpAudioSource.Play();
             footstepsAudioSource.Stop();
             onTheGround = false;
@@ -239,13 +265,26 @@ public class PlayerController : FallBody {
         //Rotate to face forward, normal to the planet
         rigidbody.MoveRotation(Quaternion.LookRotation(faceDirection, base.normal));
     }
-	
+
+    private bool CheckJump() {
+        RaycastHit hit;
+        if(Physics.Raycast(transform.position, -transform.up, out hit, jumpRaycastLength, LayerMask.GetMask("Terrain"))) {
+            return true;
+        }
+
+        return false;
+    }
+
 	// Update is called once per frame
 	protected override void Update()
 	{
         Vector3 tangentVelocity = Vector3.ProjectOnPlane(rigidbody.velocity, base.normal);
         animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
-	}
+
+        jumpInput = playerInput.GetButtonDown("Jump");
+        verticalIn = playerInput.GetAxis("Vert");
+        horizontalIn = playerInput.GetAxis("Horiz");
+    }
 
     public void TimeOut(float howLong = 2f) {
 		animator.SetTrigger("Hit");
@@ -254,18 +293,15 @@ public class PlayerController : FallBody {
 		lostControl = true;
 	}
 
-	void OnCollisionEnter(Collision collision) {
-        animator.SetBool("Land", true);
-        onTheGround = true;
-        jumped = false;
-    }
-
     private void OnTriggerEnter(Collider other) {
 
     }
 
     private void OnCollisionStay(Collision collision) {
+        animator.SetBool("Land", true);
         onTheGround = true;
+        jumped = false;
+        numUsedJumps = 0;
 
         var os = false;
         foreach (ContactPoint c in collision.contacts) {
