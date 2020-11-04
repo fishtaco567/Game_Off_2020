@@ -39,6 +39,18 @@ public class PlayerController : FallBody {
     float sliderReductionForce = 2.5f;
 
     [SerializeField]
+    float hoverForce;
+
+    [SerializeField]
+    float takeOffDelay;
+
+    [SerializeField]
+    AnimationCurve takeOffCurve;
+
+    [SerializeField]
+    float hoverTime;
+
+    [SerializeField]
     float interactRadius = 6f;
 
     [SerializeField]
@@ -68,7 +80,20 @@ public class PlayerController : FallBody {
 
     bool lostControl;
 	float lostControlTime;
-    
+
+    float currentHoverTime;
+
+    [SerializeField]
+    float currentTakeoffWaitTime;
+    [SerializeField]
+    float currentTakeoffTime;
+
+    [SerializeField]
+    float takeoffCurveTime;
+
+    [SerializeField]
+    bool takingOff;
+
     //TODO Better Jump
     [SerializeField]
     bool jumped;
@@ -93,7 +118,9 @@ public class PlayerController : FallBody {
     private int numUsedJumps;
 
     //Input
-    private bool jumpInput;
+    private bool jumpPressed;
+    private bool jumpHeld;
+    private bool takeoffHeld;
     private float horizontalIn;
     private float verticalIn;
 
@@ -144,6 +171,27 @@ public class PlayerController : FallBody {
         jumpRaycastLength = GetComponent<CapsuleCollider>().height / 2 + jumpTolerance;
 
         ability = GetComponent<PlayerAbility>();
+
+        currentHoverTime = 0;
+
+        currentTakeoffWaitTime = 0;
+        currentTakeoffTime = 0;
+        takeoffCurveTime = takeOffCurve.keys[takeOffCurve.length - 1].time;
+
+        takingOff = false;
+    }
+
+    // Update is called once per frame
+    protected override void Update() {
+        Vector3 tangentVelocity = Vector3.ProjectOnPlane(rigidbody.velocity, base.normal);
+        animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
+
+        jumpPressed = playerInput.GetButtonDown("Jump");
+        verticalIn = playerInput.GetAxis("Vert");
+        horizontalIn = playerInput.GetAxis("Horiz");
+
+        jumpHeld = playerInput.GetButton("Jump");
+        takeoffHeld = playerInput.GetButton("BlastOff");
     }
 
     protected override void FixedUpdate() {
@@ -167,7 +215,7 @@ public class PlayerController : FallBody {
                 lostControl = false;
                 animator.SetTrigger("Recover");
             } else {
-                jumpInput = false;
+                jumpPressed = false;
                 verticalIn = 0f;
                 horizontalIn = 0f;
             }
@@ -175,7 +223,7 @@ public class PlayerController : FallBody {
 
         bool grounded = CheckJump();
 
-        if ((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpInput) {
+        if ((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
             if(!grounded) {
                 numUsedJumps++;
             }
@@ -189,6 +237,33 @@ public class PlayerController : FallBody {
             jumpParticleSystem.Emit(15);
 
             rigidbody.AddRelativeForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        }
+
+        if(jumpHeld && currentHoverTime < hoverTime) {
+            currentHoverTime += Time.fixedDeltaTime;
+            rigidbody.AddRelativeForce(Vector3.up * hoverForce, ForceMode.Force);
+        }
+
+        if(!takingOff && grounded && takeoffHeld) {
+            if(currentTakeoffWaitTime < takeOffDelay) {
+                currentTakeoffWaitTime += Time.fixedDeltaTime;
+                //TODO animation and camera
+            } else {
+                takingOff = true;
+            }
+        } else if(!takingOff) {
+            currentTakeoffWaitTime = 0;
+        }
+
+        if(takingOff) {
+            if(currentTakeoffTime > takeoffCurveTime) {
+                takingOff = false;
+                currentTakeoffTime = 0;
+                currentTakeoffWaitTime = 0;
+            }
+
+            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime), ForceMode.Force);
+            currentTakeoffTime += Time.fixedDeltaTime;
         }
 
         //Move toward 
@@ -275,17 +350,6 @@ public class PlayerController : FallBody {
         return false;
     }
 
-	// Update is called once per frame
-	protected override void Update()
-	{
-        Vector3 tangentVelocity = Vector3.ProjectOnPlane(rigidbody.velocity, base.normal);
-        animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
-
-        jumpInput = playerInput.GetButtonDown("Jump");
-        verticalIn = playerInput.GetAxis("Vert");
-        horizontalIn = playerInput.GetAxis("Horiz");
-    }
-
     public void TimeOut(float howLong = 2f) {
 		animator.SetTrigger("Hit");
 
@@ -302,6 +366,7 @@ public class PlayerController : FallBody {
         onTheGround = true;
         jumped = false;
         numUsedJumps = 0;
+        currentHoverTime = 0;
 
         var os = false;
         foreach (ContactPoint c in collision.contacts) {

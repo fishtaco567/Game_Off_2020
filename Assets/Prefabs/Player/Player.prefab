@@ -9524,6 +9524,7 @@ GameObject:
   - component: {fileID: 7691164979993942732}
   - component: {fileID: 7691164979993942770}
   - component: {fileID: 7691164979993942731}
+  - component: {fileID: 114813744}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -9636,6 +9637,33 @@ MonoBehaviour:
   jumpMod: 3
   stoppingForce: 5
   sliderReductionForce: 50
+  hoverForce: 56.1
+  takeOffDelay: 1.5
+  takeOffCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 56
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1.5
+      value: 100
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  hoverTime: 0.8
   interactRadius: 6
   cam: {fileID: 0}
   footstepsSFX: {fileID: 0}
@@ -9643,7 +9671,12 @@ MonoBehaviour:
   landSFX: {fileID: 0}
   collectSFX: {fileID: 0}
   animator: {fileID: 7691164979993942770}
-  onTheGround: 0
+  jumpTolerance: 0.1
+  currentTakeoffWaitTime: 0
+  currentTakeoffTime: 0
+  takeoffCurveTime: 0
+  takingOff: 0
+  jumped: 0
 --- !u!54 &7691164979993942732
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -9657,7 +9690,7 @@ Rigidbody:
   m_AngularDrag: 0.05
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 2
+  m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 1
 --- !u!95 &7691164979993942770
@@ -9692,6 +9725,22 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.4
   m_Center: {x: 0, y: -0.67, z: 0}
+--- !u!114 &114813744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7691164979993942771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71e7eb4ff38a9854b99b8babc83315f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  numFuel: 2
+  hasRestrictorNozzle: 1
+  hasBumpNozzle: 1
+  money: 0
 --- !u!1 &7691164980513107508
 GameObject:
   m_ObjectHideFlags: 0

@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71e7eb4ff38a9854b99b8babc83315f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numFuel: 0
+  numFuel: 2
   hasRestrictorNozzle: 1
   hasBumpNozzle: 1
   money: 0
@@ -637,6 +637,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942732, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: m_Interpolate
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: takeOffCurve.m_Curve.Array.size
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
         type: 3}
       propertyPath: cam
@@ -645,7 +655,42 @@ PrefabInstance:
     - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
         type: 3}
       propertyPath: jumpTolerance
-      value: 0.05
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: hoverForce
+      value: 56.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: takeOffForcePerFuel
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: hoverTime
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: takeOffDelay
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: takeOffCurve.m_Curve.Array.data[1].time
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: takeOffCurve.m_Curve.Array.data[1].value
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 7691164979993942733, guid: 059a3eb1da840844dac85d185e6a39b4,
+        type: 3}
+      propertyPath: takeOffCurve.m_Curve.Array.data[0].value
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 7691164979993942771, guid: 059a3eb1da840844dac85d185e6a39b4,
         type: 3}
