@@ -23,17 +23,17 @@ public class Resources : MonoBehaviour {
         set {
             if(timeSinceLastHit < iFrameTime) {
                 if(value <= 0) {
-                    OnDeath();
+                    OnDeath?.Invoke();
                     health = Math.Max(0, value);
 
                     return;
                 }
 
                 if(value < health) {
-                    OnHit(health - value);
+                    OnHit?.Invoke(health - value);
                     timeSinceLastHit = 0;
                 } else if(value > health) {
-                    OnHeal(value - health);
+                    OnHeal?.Invoke(value - health);
                 }
 
                 if(value > maxHealth) {
@@ -66,7 +66,7 @@ public class Resources : MonoBehaviour {
             if(respectIFrames) {
                 if(health - delta <= 0) {
                     if(triggerDelegates) {
-                        OnDeath();
+                        OnDeath?.Invoke();
                     }
                     health = Math.Max(0, health - delta);
                     return true;
@@ -75,7 +75,7 @@ public class Resources : MonoBehaviour {
                 if(timeSinceLastHit < iFrameTime) {
                     health += delta;
                     if(triggerDelegates) {
-                        OnHit(delta);
+                        OnHit?.Invoke(delta);
                     }
                     timeSinceLastHit = 0;
                     return true;
@@ -85,7 +85,7 @@ public class Resources : MonoBehaviour {
             } else {
                 health += delta;
                 if(triggerDelegates) {
-                    OnHit(delta);
+                    OnHit?.Invoke(delta);
                 }
                 return true;
             }
@@ -94,7 +94,7 @@ public class Resources : MonoBehaviour {
             health += delta;
 
             if(triggerDelegates) {
-                OnHeal(delta);
+                OnHeal?.Invoke(delta);
             }
             return true;
         }
