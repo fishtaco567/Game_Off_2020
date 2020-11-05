@@ -262,7 +262,7 @@ public class PlayerController : FallBody {
                 currentTakeoffWaitTime = 0;
             }
 
-            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime), ForceMode.Force);
+            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.n, ForceMode.Force);
             currentTakeoffTime += Time.fixedDeltaTime;
         }
 
@@ -356,6 +356,10 @@ public class PlayerController : FallBody {
 		lostControlTime = howLong;
 		lostControl = true;
 	}
+
+    public void OnCollect(CollectibleBase collectible) {
+    
+    }
 
     private void OnTriggerEnter(Collider other) {
 
