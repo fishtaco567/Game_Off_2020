@@ -124,6 +124,8 @@ public class PlayerController : FallBody {
     private float horizontalIn;
     private float verticalIn;
 
+    bool grounded;
+
     public GameObject RaycastDown {
         get {
             RaycastHit hit;
@@ -179,22 +181,25 @@ public class PlayerController : FallBody {
         takeoffCurveTime = takeOffCurve.keys[takeOffCurve.length - 1].time;
 
         takingOff = false;
+
+        lostControl = false;
+        lostControlTime = -1;
     }
 
     // Update is called once per frame
     protected override void Update() {
         Vector3 tangentVelocity = Vector3.ProjectOnPlane(rigidbody.velocity, base.normal);
         animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
+    }
 
+    protected override void FixedUpdate() {
         jumpPressed = playerInput.GetButtonDown("Jump");
         verticalIn = playerInput.GetAxis("Vert");
         horizontalIn = playerInput.GetAxis("Horiz");
 
         jumpHeld = playerInput.GetButton("Jump");
         takeoffHeld = playerInput.GetButton("BlastOff");
-    }
 
-    protected override void FixedUpdate() {
         base.FixedUpdate();
 
         if(nearestBody != null) {
@@ -213,7 +218,7 @@ public class PlayerController : FallBody {
             lostControlTime -= Time.fixedDeltaTime;
             if (lostControlTime < 0) {
                 lostControl = false;
-                animator.SetTrigger("Recover");
+                //animator.SetTrigger("Recover");
             } else {
                 jumpPressed = false;
                 verticalIn = 0f;
@@ -221,7 +226,9 @@ public class PlayerController : FallBody {
             }
         }
 
-        bool grounded = CheckJump();
+        grounded = CheckJump();
+
+        animator.SetBool("Grounded", grounded);
 
         if ((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
             if(!grounded) {
@@ -233,7 +240,6 @@ public class PlayerController : FallBody {
             onTheGround = false;
             jumped = true;
             animator.SetTrigger("Jump");
-            animator.SetBool("Land", false);
             jumpParticleSystem.Emit(15);
 
             rigidbody.AddRelativeForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -255,6 +261,8 @@ public class PlayerController : FallBody {
             currentTakeoffWaitTime = 0;
         }
 
+        animator.SetBool("Take Off", takeoffHeld);
+
         if(takingOff) {
             if(currentTakeoffTime > takeoffCurveTime) {
                 takingOff = false;
@@ -262,7 +270,7 @@ public class PlayerController : FallBody {
                 currentTakeoffWaitTime = 0;
             }
 
-            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.n, ForceMode.Force);
+            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.numFuel, ForceMode.Force);
             currentTakeoffTime += Time.fixedDeltaTime;
         }
 
@@ -339,6 +347,8 @@ public class PlayerController : FallBody {
 
         //Rotate to face forward, normal to the planet
         rigidbody.MoveRotation(Quaternion.LookRotation(faceDirection, base.normal));
+
+        animator.SetFloat("YSpeed", transform.InverseTransformVector(rigidbody.velocity).y);
     }
 
     private bool CheckJump() {
@@ -351,7 +361,7 @@ public class PlayerController : FallBody {
     }
 
     public void TimeOut(float howLong = 2f) {
-		animator.SetTrigger("Hit");
+		//animator.SetTrigger("Hit");
 
 		lostControlTime = howLong;
 		lostControl = true;
@@ -366,7 +376,6 @@ public class PlayerController : FallBody {
     }
 
     private void OnCollisionStay(Collision collision) {
-        animator.SetBool("Land", true);
         onTheGround = true;
         jumped = false;
         numUsedJumps = 0;
