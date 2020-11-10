@@ -190,16 +190,17 @@ public class PlayerController : FallBody {
     protected override void Update() {
         Vector3 tangentVelocity = Vector3.ProjectOnPlane(rigidbody.velocity, base.normal);
         animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
-    }
+        animator.SetFloat("HitTimeout", lostControlTime);
 
-    protected override void FixedUpdate() {
-        jumpPressed = playerInput.GetButtonDown("Jump");
+        jumpPressed |= playerInput.GetButtonDown("Jump");
         verticalIn = playerInput.GetAxis("Vert");
         horizontalIn = playerInput.GetAxis("Horiz");
 
         jumpHeld = playerInput.GetButton("Jump");
         takeoffHeld = playerInput.GetButton("BlastOff");
+    }
 
+    protected override void FixedUpdate() {
         base.FixedUpdate();
 
         if(nearestBody != null) {
@@ -349,6 +350,8 @@ public class PlayerController : FallBody {
         rigidbody.MoveRotation(Quaternion.LookRotation(faceDirection, base.normal));
 
         animator.SetFloat("YSpeed", transform.InverseTransformVector(rigidbody.velocity).y);
+
+        jumpPressed = false;
     }
 
     private bool CheckJump() {
