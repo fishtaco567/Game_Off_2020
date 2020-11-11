@@ -9581,14 +9581,14 @@ MonoBehaviour:
   runParticleSystem: {fileID: 7691164979754056473}
   jumpParticleSystem: {fileID: 7691164978963987963}
   moveForce: 25
-  jumpForce: 20
+  jumpForce: 16
   maxSpeed: 15
   lowSpeed: 10
   speedupMod: 10
   jumpMod: 3
   stoppingForce: 5
   sliderReductionForce: 50
-  hoverForce: 56.1
+  hoverForce: 56.001
   takeOffDelay: 6
   takeOffCurve:
     serializedVersion: 2
@@ -9656,7 +9656,7 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.4
-  m_Center: {x: 0, y: -0.67, z: 0}
+  m_Center: {x: 0, y: -0.64, z: 0}
 --- !u!114 &114813744
 MonoBehaviour:
   m_ObjectHideFlags: 0
