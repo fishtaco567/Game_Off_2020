@@ -92,13 +92,21 @@ public class PlayerController : FallBody {
     float takeoffCurveTime;
 
     [SerializeField]
+    float jumpHoverDelay;
+
+    [SerializeField]
+    float maxSlope;
+
+    [SerializeField]
     bool takingOff;
 
     //TODO Better Jump
     [SerializeField]
     bool jumped;
 
+    [SerializeField]
     bool onSlope = false;
+    [SerializeField]
     Vector3 towardsSlope;
 
 	Vector3 faceDirection;
@@ -124,7 +132,10 @@ public class PlayerController : FallBody {
     private float horizontalIn;
     private float verticalIn;
 
+    [SerializeField]
     bool grounded;
+
+    private float timeSinceJumpPressed;
 
     public GameObject RaycastDown {
         get {
@@ -184,10 +195,13 @@ public class PlayerController : FallBody {
 
         lostControl = false;
         lostControlTime = -1;
+        timeSinceJumpPressed = 0;
     }
 
     // Update is called once per frame
     protected override void Update() {
+        jumpRaycastLength = GetComponent<CapsuleCollider>().height / 2 + jumpTolerance;
+
         Vector3 tangentVelocity = Vector3.ProjectOnPlane(rigidbody.velocity, base.normal);
         animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
         animator.SetFloat("HitTimeout", lostControlTime);
@@ -202,6 +216,8 @@ public class PlayerController : FallBody {
 
     protected override void FixedUpdate() {
         base.FixedUpdate();
+
+        bool sliding = (onSlope && !grounded) || angle > maxSlope * Mathf.Rad2Deg;
 
         if(nearestBody != null) {
             normal = nearestBody.NormalFor(transform.position);
@@ -232,6 +248,8 @@ public class PlayerController : FallBody {
         animator.SetBool("Grounded", grounded);
 
         if ((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
+            timeSinceJumpPressed = 0;
+
             if(!grounded) {
                 numUsedJumps++;
             }
@@ -243,10 +261,14 @@ public class PlayerController : FallBody {
             animator.SetTrigger("Jump");
             jumpParticleSystem.Emit(15);
 
-            rigidbody.AddRelativeForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            rigidbody.AddRelativeForce(Vector3.up * jumpForce - new Vector3(0, transform.InverseTransformVector(rigidbody.velocity).y, 0), ForceMode.VelocityChange);
         }
 
-        if(jumpHeld && currentHoverTime < hoverTime) {
+        if(!grounded) {
+            timeSinceJumpPressed += Time.fixedDeltaTime;
+        }
+
+        if(jumpHeld && currentHoverTime < hoverTime && timeSinceJumpPressed > jumpHoverDelay) {
             currentHoverTime += Time.fixedDeltaTime;
             rigidbody.AddRelativeForce(Vector3.up * hoverForce, ForceMode.Force);
         }
@@ -275,6 +297,11 @@ public class PlayerController : FallBody {
             currentTakeoffTime += Time.fixedDeltaTime;
         }
 
+        if(sliding) {
+            rigidbody.AddForce(towardsSlope * moveForce * 1.2f, ForceMode.Force);
+            Debug.DrawLine(transform.position, transform.position + towardsSlope * 5f, Color.blue);
+        }
+
         //Move toward 
         faceDirection = (
             Vector3.ProjectOnPlane(cam.forward, normal).normalized * verticalIn + Vector3.ProjectOnPlane(cam.right, normal).normalized * horizontalIn
@@ -291,7 +318,7 @@ public class PlayerController : FallBody {
         }
 
         //Main move force
-        if (onSlope) {
+        if (onSlope || angle > maxSlope * Mathf.Rad2Deg) {
             var curForce = transform.TransformVector(Vector3.forward * faceDirection.magnitude * moveForce * speedup);
             var forceTowardSlope = Vector3.Project(curForce, towardsSlope);
             if (Vector3.Dot(curForce, towardsSlope) < 0) {
@@ -356,7 +383,17 @@ public class PlayerController : FallBody {
 
     private bool CheckJump() {
         RaycastHit hit;
+
+        Debug.DrawLine(transform.position, transform.position - transform.up * jumpRaycastLength, Color.red);
+        float tanAngle = Mathf.Tan(maxSlope);
+        Debug.DrawLine(transform.position - transform.up * jumpRaycastLength, transform.position - transform.up * (jumpRaycastLength + tanAngle) + transform.forward, Color.red);
+
         if(Physics.Raycast(transform.position, -transform.up, out hit, jumpRaycastLength, LayerMask.GetMask("Terrain"))) {
+            onTheGround = true;
+            jumped = false;
+            numUsedJumps = 0;
+            currentHoverTime = 0;
+
             return true;
         }
 
@@ -378,11 +415,10 @@ public class PlayerController : FallBody {
 
     }
 
+    [SerializeField]
+    float angle;
+
     private void OnCollisionStay(Collision collision) {
-        onTheGround = true;
-        jumped = false;
-        numUsedJumps = 0;
-        currentHoverTime = 0;
 
         var os = false;
         foreach (ContactPoint c in collision.contacts) {
@@ -390,6 +426,8 @@ public class PlayerController : FallBody {
                 os = true;
                 towardsSlope = Vector3.ProjectOnPlane(c.normal, normal).normalized;
             }
+
+            angle = Vector3.Angle(c.normal, normal);
         }
         onSlope = os;
     }
