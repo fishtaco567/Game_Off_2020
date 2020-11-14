@@ -10,7 +10,15 @@ public class PlayerController : FallBody {
 	ParticleSystem runParticleSystem;
 	[SerializeField]
 	ParticleSystem jumpParticleSystem;
-    
+
+    [SerializeField]
+    ParticleSystem rocketSmokeParticleSystem;
+    [SerializeField]
+    ParticleSystem rocketFireParticleSystem;
+
+    ParticleSystem.EmissionModule rocketSmokeEmission;
+    ParticleSystem.EmissionModule rocketFireEmission;
+
     ParticleSystem.EmissionModule runParticleEmission;
     
 
@@ -163,6 +171,8 @@ public class PlayerController : FallBody {
 		}
         
 		runParticleEmission = runParticleSystem.emission;
+        rocketSmokeEmission = rocketSmokeParticleSystem.emission;
+        rocketFireEmission = rocketFireParticleSystem.emission;
 
         footstepsAudioSource = gameObject.AddComponent<AudioSource>();
         footstepsAudioSource.loop = true;
@@ -251,6 +261,8 @@ public class PlayerController : FallBody {
             timeSinceJumpPressed = 0;
 
             if(!grounded) {
+                rocketSmokeParticleSystem.Emit(5);
+                rocketFireParticleSystem.Emit(5);
                 numUsedJumps++;
             }
 
@@ -269,14 +281,19 @@ public class PlayerController : FallBody {
         }
 
         if(jumpHeld && currentHoverTime < hoverTime && timeSinceJumpPressed > jumpHoverDelay) {
+            rocketSmokeEmission.enabled = true;
+            rocketFireEmission.enabled = true;
             currentHoverTime += Time.fixedDeltaTime;
             rigidbody.AddRelativeForce(Vector3.up * hoverForce, ForceMode.Force);
+        } else {
+            rocketSmokeEmission.enabled = false;
+            rocketFireEmission.enabled = false;
         }
 
         if(!takingOff && grounded && takeoffHeld) {
             if(currentTakeoffWaitTime < takeOffDelay) {
                 currentTakeoffWaitTime += Time.fixedDeltaTime;
-                //TODO animation and camera
+                //TODO camera
             } else {
                 takingOff = true;
             }
@@ -293,8 +310,15 @@ public class PlayerController : FallBody {
                 currentTakeoffWaitTime = 0;
             }
 
+            rocketSmokeEmission.enabled = true;
+            rocketFireEmission.enabled = true;
+            var rfMain = rocketFireParticleSystem.main;
+            rfMain.startSize = 1.5f;
             rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.numFuel, ForceMode.Force);
             currentTakeoffTime += Time.fixedDeltaTime;
+        } else {
+            var rfMain = rocketFireParticleSystem.main;
+            rfMain.startSize = 1;
         }
 
         if(sliding) {
@@ -333,6 +357,7 @@ public class PlayerController : FallBody {
         runParticleEmission.enabled = (
             onTheGround && faceDirection != Vector3.zero && !onSlope
         );
+        animator.SetBool("CloseToGround", runParticleEmission.enabled);
 
         //Set face direction to transform forward to preserve rotation
         if (faceDirection == Vector3.zero || onSlope) {
