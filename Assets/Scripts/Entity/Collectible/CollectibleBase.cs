@@ -9,7 +9,7 @@ public abstract class CollectibleBase : MonoBehaviour {
         var playerAbility = other.GetComponent<PlayerAbility>();
         
         if(player != null && playerAbility != null) {
-
+            OnCollected(player, playerAbility);
         }
     }
 

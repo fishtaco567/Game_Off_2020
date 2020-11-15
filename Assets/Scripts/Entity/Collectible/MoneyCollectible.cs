@@ -1,14 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class FuelCollectible : CollectibleBase {
+public class MoneyCollectible : CollectibleBase {
 
     bool collected;
 
     // Use this for initialization
     void Start() {
         collected = false;
-
     }
 
     // Update is called once per frame
@@ -18,7 +17,7 @@ public class FuelCollectible : CollectibleBase {
     protected override void OnCollected(PlayerController player, PlayerAbility playerAbility) {
         if(!collected) {
             collected = true;
-            playerAbility.numFuel++;
+            playerAbility.money++;
         }
 
         player.OnCollect(this);
