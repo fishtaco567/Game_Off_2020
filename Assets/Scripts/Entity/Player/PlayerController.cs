@@ -280,7 +280,7 @@ public class PlayerController : FallBody {
             timeSinceJumpPressed += Time.fixedDeltaTime;
         }
 
-        if(jumpHeld && currentHoverTime < hoverTime && timeSinceJumpPressed > jumpHoverDelay) {
+        if(jumpHeld && currentHoverTime < hoverTime && timeSinceJumpPressed > jumpHoverDelay && ability.hasRestrictorNozzle && !onSlope) {
             rocketSmokeEmission.enabled = true;
             rocketFireEmission.enabled = true;
             currentHoverTime += Time.fixedDeltaTime;
@@ -460,6 +460,12 @@ public class PlayerController : FallBody {
     private void OnCollisionExit(Collision collision) {
         onTheGround = false;
         onSlope = false;
+    }
+
+    public override void OnSwitchBody() {
+        base.OnSwitchBody();
+
+        takingOff = false;
     }
 
 }

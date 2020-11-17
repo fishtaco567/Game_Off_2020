@@ -39,6 +39,12 @@ public class FallBody : MonoBehaviour {
 	}
 
 	protected virtual void FixedUpdate () {
+		var newBody = PlanetManager.Instance.NearestBodyFor(this);
+		if(newBody != nearestBody) {
+			OnSwitchBody();
+		}
+		nearestBody = newBody;
+
 		Vector3 surfaceNormal = nearestBody.NormalFor(transform.position);
 
 		normal = Vector3.Lerp(normal, surfaceNormal, smoothingLerp * Time.deltaTime);
@@ -71,4 +77,9 @@ public class FallBody : MonoBehaviour {
 	public void ReleaseToHome () {
 		transform.SetParent(homeParent);
 	}
+
+	public virtual void OnSwitchBody() {
+	
+	}
+
 }

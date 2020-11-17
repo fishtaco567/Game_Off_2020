@@ -32,6 +32,7 @@ public abstract class GravityBody : MonoBehaviour {
 
 	// Use this for initialization
 	protected virtual void Start () {
+		PlanetManager.Instance.RegisterBody(this);
 	}
 	
 	// Update is called once per frame
