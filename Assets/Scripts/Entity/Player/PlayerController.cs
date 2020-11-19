@@ -427,7 +427,7 @@ public class PlayerController : FallBody {
     }
 
     public void TimeOut(float howLong = 2f) {
-		//animator.SetTrigger("Hit");
+		animator.SetTrigger("Hit");
 
 		lostControlTime = howLong;
 		lostControl = true;

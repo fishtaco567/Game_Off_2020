@@ -11,4 +11,27 @@ public class PlayerAbility : MonoBehaviour {
 
     public int money;
 
+    public int maxHealth;
+
+    public int currentHealth;
+
+    public void TakeDamage(int damage) {
+        var newHealth = currentHealth - damage;
+        if(newHealth < 0) {
+            Die();
+            currentHealth = 0;
+        } else {
+            currentHealth = newHealth;
+        }
+    }
+
+    public void Die() {
+    
+    }
+
+    public void ResetHealth() {
+        currentHealth = maxHealth;
+
+    }
+
 }
