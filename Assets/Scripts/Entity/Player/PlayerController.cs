@@ -165,6 +165,7 @@ public class PlayerController : FallBody {
     protected override void Start()
 	{
 		base.Start();
+        touching = false;
 
 		if (cam == null) {
 			cam = Camera.main.transform;
@@ -280,7 +281,7 @@ public class PlayerController : FallBody {
             timeSinceJumpPressed += Time.fixedDeltaTime;
         }
 
-        if(jumpHeld && currentHoverTime < hoverTime && timeSinceJumpPressed > jumpHoverDelay && ability.hasRestrictorNozzle && !onSlope) {
+        if(jumpHeld && currentHoverTime < hoverTime && timeSinceJumpPressed > jumpHoverDelay && ability.hasRestrictorNozzle && !onSlope && !touching) {
             rocketSmokeEmission.enabled = true;
             rocketFireEmission.enabled = true;
             currentHoverTime += Time.fixedDeltaTime;
@@ -443,8 +444,10 @@ public class PlayerController : FallBody {
     [SerializeField]
     float angle;
 
-    private void OnCollisionStay(Collision collision) {
+    bool touching;
 
+    private void OnCollisionStay(Collision collision) {
+        touching = true;
         var os = false;
         foreach (ContactPoint c in collision.contacts) {
             if (c.thisCollider.GetType() == typeof(CapsuleCollider)) {
@@ -460,6 +463,7 @@ public class PlayerController : FallBody {
     private void OnCollisionExit(Collision collision) {
         onTheGround = false;
         onSlope = false;
+        touching = false;
     }
 
     public override void OnSwitchBody() {
