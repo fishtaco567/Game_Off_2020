@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Rewired;
 
 public class CameraDolly : MonoBehaviour {
 
@@ -23,6 +24,12 @@ public class CameraDolly : MonoBehaviour {
     [SerializeField]
     float maxHeightFromPlayerFeet = 8;
 
+    [SerializeField]
+    float lookUpDistX;
+
+    [SerializeField]
+    float lookUpDistY;
+
     //Seconds
     public float centerTime = 1f;
 
@@ -35,22 +42,36 @@ public class CameraDolly : MonoBehaviour {
     bool targeting;
 
     Vector3 baseOffset {
-        get{ return new Vector3(0, maxHeightFromPlayerFeet, -(minFollowDist + maxFollowDist) / 2); }
+        get{ return new Vector3(0, isLookingUp ? lookUpDistY : maxHeightFromPlayerFeet, isLookingUp ? lookUpDistX : -(minFollowDist + maxFollowDist) / 2); }
     }
 
-	// Use this for initialization
-	void Start () {
+    public bool isLookingUp;
+    private Player playerInput;
+
+    // Use this for initialization
+    void Start () {
+        //Get the player
+        playerInput = ReInput.players.GetPlayer(0);
+
         Vector3 playerPos = player.transform.position;
         Vector3 playerNormal = player.normal;
 
         transform.position = playerPos + player.transform.TransformVector(baseOffset);
         transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(playerPos - transform.position, playerNormal), playerNormal);
         mainCam.transform.rotation = Quaternion.LookRotation(playerPos - mainCam.transform.position, playerNormal);
+
+        isLookingUp = false;
     }
 
 
 	// Update is called once per frame
 	void LateUpdate () {
+        var cVert = playerInput.GetAxis("CVert");
+        if(cVert < 0) {
+            isLookingUp = true;
+        } else {
+            isLookingUp = false;
+        }
         //TODO allow freecam
         Vector3 playerPos = player.transform.position;
         Vector3 playerNormal = player.normal;
@@ -66,11 +87,18 @@ public class CameraDolly : MonoBehaviour {
 
         //Follow behind player
         var curOffset = transform.InverseTransformVector(playerPos - transform.position);
-        
-        if (curOffset.z > maxFollowDist) {
-            curOffset.z = maxFollowDist;
-        } else if (curOffset.z < minFollowDist) {
-            curOffset.z = minFollowDist;
+
+        var curMinFollow = minFollowDist;
+        var curMaxFollow = maxFollowDist;
+
+        if(isLookingUp) {
+            curMinFollow = lookUpDistX;
+        }
+
+        if(curOffset.z > curMaxFollow) {
+            curOffset.z = curMaxFollow;
+        } else if(curOffset.z < curMinFollow) {
+            curOffset.z = curMinFollow;
         }
         curOffset.z = Mathf.Lerp(curOffset.z, -baseOffset.z, Time.deltaTime * sensitivity);
 
@@ -95,18 +123,31 @@ public class CameraDolly : MonoBehaviour {
         //Follow above player
         curOffset = transform.InverseTransformVector(playerPos - transform.position);
 
-        if (curOffset.y < -maxHeightFromPlayerFeet) {
-            curOffset.y = -maxHeightFromPlayerFeet;
-        } else if(curOffset.y > -minHeightFromPlayerFeet) {
-            curOffset.y = -minHeightFromPlayerFeet;
+        var curMinHeight = minHeightFromPlayerFeet;
+        var curMaxHeight = maxHeightFromPlayerFeet;
+
+        if(isLookingUp) {
+            curMinHeight = lookUpDistY;
+        }
+
+        if(curOffset.y < -curMaxHeight) {
+            curOffset.y = -curMaxHeight;
+        } else if(curOffset.y > -curMinHeight) {
+            curOffset.y = -curMinHeight;
         }
         curOffset.y = Mathf.Lerp(curOffset.y, -baseOffset.y, Time.deltaTime * sensitivity);
 
         //Apply to position
         transform.position = playerPos - transform.TransformVector(curOffset);
 
-        //Point the camera at the player
-        mainCam.transform.rotation = Quaternion.Slerp(mainCam.transform.rotation, Quaternion.LookRotation(playerPos - mainCam.transform.position, playerNormal), Time.deltaTime * sensitivity * 3);
+
+        if(isLookingUp) {
+            var goalRotation = Quaternion.AngleAxis(-90, transform.right) * Quaternion.LookRotation(Vector3.ProjectOnPlane(playerPos - transform.position, playerNormal), playerNormal);
+
+            mainCam.transform.rotation = Quaternion.Slerp(mainCam.transform.rotation, goalRotation, Time.deltaTime * sensitivity * 3);
+        } else {
+            mainCam.transform.rotation = Quaternion.Slerp(mainCam.transform.rotation, Quaternion.LookRotation(playerPos - mainCam.transform.position, playerNormal), Time.deltaTime * sensitivity * 3);
+        }
 
         //Debug.DrawRay(playerPos, player.transform.up, Color.red, 4);
         //Debug.DrawLine(playerPos, mainCam.transform.position, Color.blue, 4);

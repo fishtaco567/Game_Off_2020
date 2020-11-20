@@ -56,6 +56,12 @@ public class PlayerController : FallBody {
     AnimationCurve takeOffCurve;
 
     [SerializeField]
+    float knockbackForce;
+
+    [SerializeField]
+    float knockbackUp;
+
+    [SerializeField]
     float hoverTime;
 
     [SerializeField]
@@ -223,6 +229,8 @@ public class PlayerController : FallBody {
 
         jumpHeld = playerInput.GetButton("Jump");
         takeoffHeld = playerInput.GetButton("BlastOff");
+
+        animator.SetFloat("GroundProx", GetDistanceToGround(3f));
     }
 
     protected override void FixedUpdate() {
@@ -234,7 +242,7 @@ public class PlayerController : FallBody {
             normal = nearestBody.NormalFor(transform.position);
 
             //Add extra force when falling
-            if (onTheGround && !onSlope) {
+            if(onTheGround && !onSlope) {
                 rigidbody.AddForce(-nearestBody.Magnitude * normal, ForceMode.Acceleration);
             } else {
                 rigidbody.AddForce(-nearestBody.Magnitude * normal * jumpMod, ForceMode.Acceleration);
@@ -242,15 +250,12 @@ public class PlayerController : FallBody {
         }
 
         //Lose control when damaged
-        if (lostControl) {
+        if(lostControl) {
             lostControlTime -= Time.fixedDeltaTime;
-            if (lostControlTime < 0) {
+            if(lostControlTime < 0) {
                 lostControl = false;
                 //animator.SetTrigger("Recover");
             } else {
-                jumpPressed = false;
-                verticalIn = 0f;
-                horizontalIn = 0f;
             }
         }
 
@@ -258,7 +263,7 @@ public class PlayerController : FallBody {
 
         animator.SetBool("Grounded", grounded);
 
-        if ((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
+        if((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
             timeSinceJumpPressed = 0;
 
             if(!grounded) {
@@ -298,8 +303,16 @@ public class PlayerController : FallBody {
             } else {
                 takingOff = true;
             }
+
+            horizontalIn = 0;
+            verticalIn = 0;
         } else if(!takingOff) {
             currentTakeoffWaitTime = 0;
+        }
+
+        if(cam.GetComponentInParent<CameraDolly>().isLookingUp) {
+            horizontalIn = 0;
+            verticalIn = 0;
         }
 
         animator.SetBool("Take Off", takeoffHeld);
@@ -317,6 +330,9 @@ public class PlayerController : FallBody {
             rfMain.startSize = 1.5f;
             rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.numFuel, ForceMode.Force);
             currentTakeoffTime += Time.fixedDeltaTime;
+
+            horizontalIn = 0;
+            verticalIn = 0;
         } else {
             var rfMain = rocketFireParticleSystem.main;
             rfMain.startSize = 1;
@@ -410,9 +426,7 @@ public class PlayerController : FallBody {
     private bool CheckJump() {
         RaycastHit hit;
 
-        Debug.DrawLine(transform.position, transform.position - transform.up * jumpRaycastLength, Color.red);
         float tanAngle = Mathf.Tan(maxSlope);
-        Debug.DrawLine(transform.position - transform.up * jumpRaycastLength, transform.position - transform.up * (jumpRaycastLength + tanAngle) + transform.forward, Color.red);
 
         if(Physics.Raycast(transform.position, -transform.up, out hit, jumpRaycastLength, LayerMask.GetMask("Terrain"))) {
             onTheGround = true;
@@ -426,11 +440,26 @@ public class PlayerController : FallBody {
         return false;
     }
 
-    public void TimeOut(float howLong = 2f) {
+    private float GetDistanceToGround(float maxDist) {
+        RaycastHit hit;
+
+        float tanAngle = Mathf.Tan(maxSlope);
+
+        if(Physics.Raycast(transform.position - transform.up * 1, -transform.up, out hit, maxDist, LayerMask.GetMask("Terrain"))) {
+            return hit.distance;
+        }
+
+        return maxDist;        
+    }
+
+    public void TimeOut(float howLong = 0.5f) {
 		animator.SetTrigger("Hit");
 
 		lostControlTime = howLong;
 		lostControl = true;
+
+        rigidbody.AddRelativeForce(Vector3.back * knockbackForce, ForceMode.VelocityChange);
+        rigidbody.AddRelativeForce(Vector3.up * knockbackUp - new Vector3(0, transform.InverseTransformVector(rigidbody.velocity).y, 0), ForceMode.VelocityChange);
 	}
 
     public void OnCollect(CollectibleBase collectible) {
@@ -449,6 +478,8 @@ public class PlayerController : FallBody {
     private void OnCollisionStay(Collision collision) {
         touching = true;
         var os = false;
+        lostControl = false;
+        lostControlTime = -1;
         foreach (ContactPoint c in collision.contacts) {
             if (c.thisCollider.GetType() == typeof(CapsuleCollider)) {
                 os = true;

@@ -22,6 +22,7 @@ public class FireShooter : MonoBehaviour {
     ParticleSystem.EmissionModule system1Em;
     ParticleSystem.EmissionModule system2Em;
 
+    [SerializeField]
     bool isOn;
 
     float currentTime;
@@ -30,7 +31,6 @@ public class FireShooter : MonoBehaviour {
         system1Em = system1.emission;
         system2Em = system2.emission;
 
-        isOn = true;
         currentTime = 0;
     }
 
