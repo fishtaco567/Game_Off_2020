@@ -5,7 +5,7 @@ using System;
 public class NPCController : MonoBehaviour {
 
     public Action<PlayerController, NPCController> OnInteract;
-    public Action<int, NPCController> OnDisplayBox;
+    public Func<int, NPCController, bool> OnDisplayBox;
 
     [SerializeField]
     protected AudioClip interactAudio;
@@ -58,8 +58,13 @@ public class NPCController : MonoBehaviour {
         UIManager.Instance.StartText(text, OnTextbox);
     }
 
-    public void OnTextbox(int i) {
-        OnDisplayBox?.Invoke(i, this);
+    public bool OnTextbox(int i) {
+        var b = OnDisplayBox?.Invoke(i, this);
+        if(b.HasValue) {
+            return b.Value;
+        } else {
+            return true;
+        }
     }
 
 }

@@ -40,7 +40,7 @@ public class UIManager : Singleton<UIManager> {
     [SerializeField]
     private float currentTime;
 
-    private Action<int> callback;
+    private Func<int, bool> callback;
 
     protected void Start() {
         textMesh = textPane.GetComponentInChildren<TMP_Text>();
@@ -83,7 +83,12 @@ public class UIManager : Singleton<UIManager> {
                         textMesh.enabled = false;
                         currentTime = 0;
                     } else {
-                        callback?.Invoke(currentPosition);
+                        var b = callback?.Invoke(currentPosition);
+                        if(b == false) {
+                            isTextOn = false;
+                            textMesh.enabled = false;
+                            currentTime = 0;
+                        }
                     }
                 }
             }
@@ -98,7 +103,7 @@ public class UIManager : Singleton<UIManager> {
         }
     }
 
-    public void StartText(string[] text, Action<int> callback) {
+    public void StartText(string[] text, Func<int, bool> callback) {
         isTextOn = true;
         currentText = text;
         currentPosition = 0;
