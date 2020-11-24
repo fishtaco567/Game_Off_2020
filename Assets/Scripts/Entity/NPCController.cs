@@ -5,6 +5,7 @@ using System;
 public class NPCController : MonoBehaviour {
 
     public Action<PlayerController, NPCController> OnInteract;
+    public Action<int, NPCController> OnDisplayBox;
 
     [SerializeField]
     protected AudioClip interactAudio;
@@ -22,6 +23,10 @@ public class NPCController : MonoBehaviour {
 
     protected AudioSource interactAudioSource;
 
+    [SerializeField]
+    protected string[] text;
+
+
     protected void Start() {
         if(interactAudio != null) {
             interactAudioSource = gameObject.AddComponent<AudioSource>();
@@ -29,7 +34,7 @@ public class NPCController : MonoBehaviour {
         }
 
         if(hasAnimator) {
-            animator = GetComponent<Animator>();
+            animator = GetComponentInChildren<Animator>();
         }
     }
 
@@ -49,6 +54,12 @@ public class NPCController : MonoBehaviour {
         }
 
         OnInteract?.Invoke(player, this);
+
+        UIManager.Instance.StartText(text, OnTextbox);
+    }
+
+    public void OnTextbox(int i) {
+        OnDisplayBox?.Invoke(i, this);
     }
 
 }

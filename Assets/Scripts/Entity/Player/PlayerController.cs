@@ -145,6 +145,7 @@ public class PlayerController : FallBody {
     private bool takeoffHeld;
     private float horizontalIn;
     private float verticalIn;
+    private bool interactPressed;
 
     [SerializeField]
     bool grounded;
@@ -223,12 +224,34 @@ public class PlayerController : FallBody {
         animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
         animator.SetFloat("HitTimeout", lostControlTime);
 
-        jumpPressed |= playerInput.GetButtonDown("Jump");
-        verticalIn = playerInput.GetAxis("Vert");
-        horizontalIn = playerInput.GetAxis("Horiz");
+        if(!UIManager.Instance.focused) {
+            jumpPressed |= playerInput.GetButtonDown("Jump");
+            verticalIn = playerInput.GetAxis("Vert");
+            horizontalIn = playerInput.GetAxis("Horiz");
 
-        jumpHeld = playerInput.GetButton("Jump");
-        takeoffHeld = playerInput.GetButton("BlastOff");
+            jumpHeld = playerInput.GetButton("Jump");
+            takeoffHeld = playerInput.GetButton("BlastOff");
+
+            interactPressed = playerInput.GetButton("Interact");
+        } else {
+            jumpPressed = false;
+            verticalIn = 0;
+            horizontalIn = 0;
+            jumpHeld = false;
+            takeoffHeld = false;
+            interactPressed = false;
+        }
+
+        if(interactPressed) {
+            var colliders = Physics.OverlapSphere(transform.position, interactRadius, LayerMask.GetMask("Interact"));
+
+            foreach(Collider col in colliders) {
+                var npc = col.GetComponent<NPCController>();
+                if(npc != null) {
+                    npc.Interact(this);
+                }
+            }
+        }
 
         animator.SetFloat("GroundProx", GetDistanceToGround(3f));
     }
