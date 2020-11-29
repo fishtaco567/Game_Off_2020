@@ -12,13 +12,19 @@ public class PickUpBumpNozzle : MonoBehaviour {
         npc.OnDisplayBox += OnDisplayBox;
     }
 
+    private PlayerAbility playerAbility;
+
     protected void OnInteract(PlayerController player, NPCController npc) {
-        player.GetComponent<PlayerAbility>().hasBumpNozzle = true;
+        playerAbility = player.GetComponent<PlayerAbility>();
     }
 
     protected bool OnDisplayBox(int i, NPCController npc) {
         if(i == pickUpOnBox) {
-            npc.GetComponentInChildren<Animator>().SetTrigger("Give");
+            if(playerAbility.hasBumpNozzle != true) {
+                npc.GetComponentInChildren<Animator>().SetTrigger("Give");
+                playerAbility.hasBumpNozzle = true;
+                UIManager.Instance.ObtainBump();
+            }
         }
 
         return true;

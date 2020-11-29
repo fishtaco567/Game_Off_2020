@@ -13,6 +13,16 @@ public class UIManager : Singleton<UIManager> {
     protected RectTransform textBackground;
 
     [SerializeField]
+    protected TMP_Text moneyText;
+    [SerializeField]
+    protected TMP_Text fuelText;
+
+    [SerializeField]
+    protected GameObject bumpNozzleIndicator;
+    [SerializeField]
+    protected GameObject restrictorNozzleIndicator;
+
+    [SerializeField]
     protected Vector2 panelMinSize;
     
     [SerializeField]
@@ -58,6 +68,12 @@ public class UIManager : Singleton<UIManager> {
         textPane.SetActive(false);
 
         focused = false;
+
+        initialBumpPos = bumpNozzleIndicator.transform.localPosition;
+        initialRestrictPos = restrictorNozzleIndicator.transform.localPosition;
+
+        bumpNozzleIndicator.SetActive(false);
+        restrictorNozzleIndicator.SetActive(false);
     }
 
     protected void Update() {
@@ -101,6 +117,27 @@ public class UIManager : Singleton<UIManager> {
                 textPane.SetActive(false);
             }
         }
+
+        if(bumpCollected || restrictorCollected) {
+            currentCollectTime += Time.deltaTime;
+
+            if(currentCollectTime > collectDelay && currentCollectTime < collectTime + collectDelay) {
+                var curFloatTime = currentCollectTime - collectDelay;
+                if(bumpCollected) {
+                    bumpNozzleIndicator.transform.localPosition = initialBumpPos * (curFloatTime / collectTime);
+                } else if(restrictorCollected) {
+                    restrictorNozzleIndicator.transform.localPosition = initialRestrictPos * (curFloatTime / collectTime);
+                }
+            } else if(currentCollectTime > collectTime + collectDelay) {
+                if(bumpCollected) {
+                    bumpNozzleIndicator.transform.localPosition = initialBumpPos;
+                } else if(restrictorCollected) {
+                    restrictorNozzleIndicator.transform.localPosition = initialRestrictPos;
+                }
+                bumpCollected = false;
+                restrictorCollected = false;
+            }
+        }
     }
 
     public void StartText(string[] text, Func<int, bool> callback) {
@@ -112,6 +149,42 @@ public class UIManager : Singleton<UIManager> {
         this.callback = callback;
 
         callback?.Invoke(currentPosition);
+    }
+
+    public void UpdateMoneyText(int money) {
+        moneyText.text = money.ToString();
+    }
+
+    public void UpdateFuelText(int fuel) {
+        fuelText.text = fuel.ToString();
+    }
+
+    [SerializeField]
+    public float collectTime;
+    [SerializeField]
+    public float collectDelay;
+
+    [SerializeField]
+    private float currentCollectTime;
+
+    private Vector3 initialBumpPos;
+    private Vector3 initialRestrictPos;
+
+    private bool bumpCollected;
+    private bool restrictorCollected;
+
+    public void ObtainBump() {
+        currentCollectTime = 0;
+        bumpCollected = true;
+        bumpNozzleIndicator.transform.localPosition = Vector3.zero;
+        bumpNozzleIndicator.SetActive(true);
+    }
+
+    public void ObtainRestrictor() {
+        currentCollectTime = 0;
+        restrictorCollected = true;
+        restrictorNozzleIndicator.transform.localPosition = Vector3.zero;
+        restrictorNozzleIndicator.SetActive(true);
     }
 
 }

@@ -25,6 +25,11 @@ public class PlayerAbility : MonoBehaviour {
         }
     }
 
+    public void Update() {
+        UIManager.Instance.UpdateFuelText(numFuel);
+        UIManager.Instance.UpdateMoneyText(money);
+    }
+
     public void Die() {
     
     }

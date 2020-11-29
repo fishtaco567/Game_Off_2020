@@ -12,13 +12,19 @@ public class PickUpRestrictorNozzle : MonoBehaviour {
         npc.OnDisplayBox += OnDisplayBox;
     }
 
+    private PlayerAbility playerAbility;
+
     protected void OnInteract(PlayerController player, NPCController npc) {
-        player.GetComponent<PlayerAbility>().hasRestrictorNozzle = true;
+        playerAbility = player.GetComponent<PlayerAbility>();
     }
 
     protected bool OnDisplayBox(int i, NPCController npc) {
         if(i == pickUpOnBox) {
-            npc.GetComponentInChildren<Animator>().SetTrigger("Give");
+            if(playerAbility.hasRestrictorNozzle != true) {
+                npc.GetComponentInChildren<Animator>().SetTrigger("Give");
+                playerAbility.hasRestrictorNozzle = true;
+                UIManager.Instance.ObtainRestrictor();
+            }
         }
 
         return true;
