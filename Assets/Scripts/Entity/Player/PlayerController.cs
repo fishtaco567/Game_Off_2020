@@ -71,18 +71,6 @@ public class PlayerController : FallBody {
     Transform cam;
 
     [SerializeField]
-    AudioClip footstepsSFX;
-
-    [SerializeField]
-    AudioClip jumpSFX;
-
-    [SerializeField]
-    AudioClip landSFX;
-
-    [SerializeField]
-    AudioClip collectSFX;
-
-    [SerializeField]
     Animator animator;
 
     [SerializeField]
@@ -125,13 +113,32 @@ public class PlayerController : FallBody {
 
 	Vector3 faceDirection;
 
+    [SerializeField]
     AudioSource footstepsAudioSource;
 
+    [SerializeField]
     AudioSource jumpAudioSource;
 
+    [SerializeField]
     AudioSource landAudioSource;
 
+    [SerializeField]
     AudioSource collectAudioSource;
+
+    [SerializeField]
+    AudioSource hitAudioSource;
+
+    [SerializeField]
+    AudioSource hoverAudioSource;
+
+    [SerializeField]
+    AudioSource takeOffAudioSource;
+
+    [SerializeField]
+    AudioSource doubleJumpAudioSource;
+
+    [SerializeField]
+    AudioSource fuelAudioSource;
 
     private Player playerInput;
 
@@ -169,10 +176,14 @@ public class PlayerController : FallBody {
         }
     }
 
+    float timeUngrounded;
+
     protected override void Start()
 	{
 		base.Start();
         touching = false;
+
+        timeUngrounded = 0;
 
 		if (cam == null) {
 			cam = Camera.main.transform;
@@ -181,19 +192,6 @@ public class PlayerController : FallBody {
 		runParticleEmission = runParticleSystem.emission;
         rocketSmokeEmission = rocketSmokeParticleSystem.emission;
         rocketFireEmission = rocketFireParticleSystem.emission;
-
-        footstepsAudioSource = gameObject.AddComponent<AudioSource>();
-        footstepsAudioSource.loop = true;
-        footstepsAudioSource.clip = footstepsSFX;
-
-        jumpAudioSource = gameObject.AddComponent<AudioSource>();
-        jumpAudioSource.clip = jumpSFX;
-
-        landAudioSource = gameObject.AddComponent<AudioSource>();
-        landAudioSource.clip = landSFX;
-
-        collectAudioSource = gameObject.AddComponent<AudioSource>();
-        collectAudioSource.clip = collectSFX;
 
         //Get the player
         playerInput = ReInput.players.GetPlayer(0);
@@ -224,7 +222,24 @@ public class PlayerController : FallBody {
         animator.SetFloat("Velocity", Vector3.Magnitude(tangentVelocity));
         animator.SetFloat("HitTimeout", lostControlTime);
 
-        if(!UIManager.Instance.focused) {
+        var unpaused = false;
+
+        if(UIManager.Instance.inGameMenu.isOpen) {
+            bool pausePressed = playerInput.GetButtonDown("Pause");
+            if(pausePressed) {
+                unpaused = true;
+                UIManager.Instance.inGameMenu.ResumePressed();
+            }
+        }
+
+        if(!UIManager.Instance.focused && !unpaused) {
+            bool pausePressed = playerInput.GetButtonDown("Pause");
+            if(pausePressed) {
+                UIManager.Instance.inGameMenu.OpenInGameMenu();
+            }
+        }
+
+        if(!UIManager.Instance.focused && !GameManager.Instance.isInMenu) {
             jumpPressed |= playerInput.GetButtonDown("Jump");
             verticalIn = playerInput.GetAxis("Vert");
             horizontalIn = playerInput.GetAxis("Horiz");
@@ -282,16 +297,29 @@ public class PlayerController : FallBody {
             }
         }
 
+        var wasGroundedLastFrame = grounded;
+
         grounded = CheckJump();
+
+        if(!wasGroundedLastFrame && grounded && timeUngrounded > 0.3f) {
+            landAudioSource.Play();
+        }
 
         animator.SetBool("Grounded", grounded);
 
-        if((!jumped || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
+        if(!grounded) {
+            timeUngrounded += Time.deltaTime;
+        } else {
+            timeUngrounded = 0;
+        }
+
+        if(((!jumped && (grounded || timeUngrounded < 0.2)) || (numUsedJumps == 0 && ability.hasBumpNozzle)) && jumpPressed) {
             timeSinceJumpPressed = 0;
 
-            if(!grounded) {
+            if(!grounded && ability.hasBumpNozzle) {
                 rocketSmokeParticleSystem.Emit(5);
                 rocketFireParticleSystem.Emit(5);
+                doubleJumpAudioSource.Play();
                 numUsedJumps++;
             }
 
@@ -314,7 +342,11 @@ public class PlayerController : FallBody {
             rocketFireEmission.enabled = true;
             currentHoverTime += Time.fixedDeltaTime;
             rigidbody.AddRelativeForce(Vector3.up * hoverForce, ForceMode.Force);
+            if(!hoverAudioSource.isPlaying) {
+                hoverAudioSource.Play();
+            }
         } else {
+            hoverAudioSource.Stop();
             rocketSmokeEmission.enabled = false;
             rocketFireEmission.enabled = false;
         }
@@ -349,6 +381,9 @@ public class PlayerController : FallBody {
 
             rocketSmokeEmission.enabled = true;
             rocketFireEmission.enabled = true;
+            if(!takeOffAudioSource.isPlaying) {
+                takeOffAudioSource.Play();
+            }
             var rfMain = rocketFireParticleSystem.main;
             rfMain.startSize = 1.5f;
             rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.numFuel, ForceMode.Force);
@@ -359,6 +394,7 @@ public class PlayerController : FallBody {
         } else {
             var rfMain = rocketFireParticleSystem.main;
             rfMain.startSize = 1;
+            takeOffAudioSource.Stop();
         }
 
         if(sliding) {
@@ -443,6 +479,12 @@ public class PlayerController : FallBody {
 
         animator.SetFloat("YSpeed", transform.InverseTransformVector(rigidbody.velocity).y);
 
+        if(!takingOff && transform.InverseTransformVector(rigidbody.velocity).y < -30) {
+            rigidbody.drag = 3f;
+        } else {
+            rigidbody.drag = 0.1f;
+        }
+
         jumpPressed = false;
     }
 
@@ -451,7 +493,7 @@ public class PlayerController : FallBody {
 
         float tanAngle = Mathf.Tan(maxSlope);
 
-        if(Physics.Raycast(transform.position, -transform.up, out hit, jumpRaycastLength, LayerMask.GetMask("Terrain"))) {
+        if(Physics.Raycast(transform.position, -transform.up, out hit, jumpRaycastLength, LayerMask.GetMask("Terrain", "T2"))) {
             onTheGround = true;
             jumped = false;
             numUsedJumps = 0;
@@ -468,7 +510,7 @@ public class PlayerController : FallBody {
 
         float tanAngle = Mathf.Tan(maxSlope);
 
-        if(Physics.Raycast(transform.position - transform.up * 1, -transform.up, out hit, maxDist, LayerMask.GetMask("Terrain"))) {
+        if(Physics.Raycast(transform.position - transform.up * 1, -transform.up, out hit, maxDist, LayerMask.GetMask("Terrain", "T2"))) {
             return hit.distance;
         }
 
@@ -483,9 +525,16 @@ public class PlayerController : FallBody {
 
         rigidbody.AddRelativeForce(Vector3.back * knockbackForce, ForceMode.VelocityChange);
         rigidbody.AddRelativeForce(Vector3.up * knockbackUp - new Vector3(0, transform.InverseTransformVector(rigidbody.velocity).y, 0), ForceMode.VelocityChange);
+
+        hitAudioSource.Play();
 	}
 
     public void OnCollect(CollectibleBase collectible) {
+        if(collectible is MoneyCollectible) {
+            collectAudioSource.Play();
+        } else if(collectible is FuelCollectible) {
+            fuelAudioSource.Play();
+        }
     
     }
 

@@ -52,7 +52,15 @@ public class UIManager : Singleton<UIManager> {
 
     private Func<int, bool> callback;
 
+    [SerializeField]
+    private MainMenu mainMenu;
+
+    [SerializeField]
+    public InGameMenu inGameMenu;
+
     protected void Start() {
+        mainMenu.SetupMenus();
+
         textMesh = textPane.GetComponentInChildren<TMP_Text>();
         textBackground = textPane.GetComponent<RectTransform>();
 

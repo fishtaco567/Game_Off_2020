@@ -9,12 +9,20 @@ public class OpenDoor : MonoBehaviour {
 
     public bool tookMoney;
 
+    public bool opened;
+
     // Use this for initialization
     void Start() {
         var npc = GetComponent<NPCController>();
         npc.OnDisplayBox += OnDisplayBox;
         npc.OnInteract += OnInteract;
+        npc.PlaySecond += Second;
         tookMoney = false;
+        opened = false;
+    }
+
+    protected bool Second(NPCController npc) {
+        return opened;
     }
 
     protected void OnInteract(PlayerController player, NPCController npc) {
@@ -33,6 +41,7 @@ public class OpenDoor : MonoBehaviour {
         } 
 
         if(i == openOnBox + 1 && tookMoney) {
+            opened = true;
             door.SetOpen(true);
         }
 

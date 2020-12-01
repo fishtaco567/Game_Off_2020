@@ -27,6 +27,9 @@ public class FireShooter : MonoBehaviour {
 
     float currentTime;
 
+    [SerializeField]
+    AudioSource audio;
+
     public void Start() {
         system1Em = system1.emission;
         system2Em = system2.emission;
@@ -47,9 +50,13 @@ public class FireShooter : MonoBehaviour {
         if(isOn) {
             system1Em.enabled = true;
             system2Em.enabled = true;
+            if(!audio.isPlaying) {
+                audio.Play();
+            }
         } else {
             system1Em.enabled = false;
             system2Em.enabled = false;
+            audio.Stop();
         }
     }
 

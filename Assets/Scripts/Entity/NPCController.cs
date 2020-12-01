@@ -7,8 +7,7 @@ public class NPCController : MonoBehaviour {
     public Action<PlayerController, NPCController> OnInteract;
     public Func<int, NPCController, bool> OnDisplayBox;
 
-    [SerializeField]
-    protected AudioClip interactAudio;
+    public Predicate<NPCController> PlaySecond;
 
     [SerializeField]
     protected float minPitch = 1;
@@ -21,18 +20,16 @@ public class NPCController : MonoBehaviour {
 
     protected Animator animator;
 
+    [SerializeField]
     protected AudioSource interactAudioSource;
 
     [SerializeField]
     protected string[] text;
 
+    [SerializeField]
+    protected string[] text2;
 
     protected void Start() {
-        if(interactAudio != null) {
-            interactAudioSource = gameObject.AddComponent<AudioSource>();
-            interactAudioSource.clip = interactAudio;
-        }
-
         if(hasAnimator) {
             animator = GetComponentInChildren<Animator>();
         }
@@ -55,7 +52,14 @@ public class NPCController : MonoBehaviour {
 
         OnInteract?.Invoke(player, this);
 
-        UIManager.Instance.StartText(text, OnTextbox);
+        var playSecond = PlaySecond?.Invoke(this);
+
+        if(playSecond.HasValue && playSecond.Value) {
+            UIManager.Instance.StartText(text2, OnTextbox);
+        } else {
+            UIManager.Instance.StartText(text, OnTextbox);
+        }
+
     }
 
     public bool OnTextbox(int i) {

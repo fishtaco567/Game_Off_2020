@@ -11,6 +11,13 @@ public class PlanetManager : Singleton<PlanetManager> {
     }
 
     public void RegisterBody(GravityBody body) {
+        //scan for old instances
+        for(int i = planets.Count - 1; i >= 0; i--) {
+            if(planets[i] == null) {
+                planets.RemoveAt(i);
+            }
+        }
+
         planets.Add(body);
     }
 

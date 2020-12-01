@@ -20,10 +20,25 @@ public class PlanetaryPlacer : MonoBehaviour {
     private bool setToHeight;
 
     private void OnValidate() {
+        if(planet == null) {
+            return;
+        }
+
         if(setToHeight) {
             RaycastHit hit;
-            if(Physics.Raycast(transform.position + transform.up * 30, -transform.up, out hit, 60, LayerMask.GetMask("Terrain"))) {
-                radius = Vector3.Distance(hit.point, planet.transform.position) + heightAbove;
+
+            var bcs = this.GetComponentsInChildren<Collider>();
+
+            foreach(Collider bc in bcs) {
+                bc.enabled = false;
+            }
+
+            if(Physics.Raycast(transform.position + transform.up * 30, -transform.up, out hit, 100, LayerMask.GetMask("Terrain"))) {
+                    radius = Vector3.Distance(hit.point, planet.transform.position) + heightAbove;
+            }
+
+            foreach(Collider bc in bcs) {
+                bc.enabled = true;
             }
 
         }
