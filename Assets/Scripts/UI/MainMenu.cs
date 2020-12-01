@@ -17,6 +17,9 @@ public class MainMenu : MonoBehaviour
     [SerializeField]
     protected GameObject titleImage;
 
+    [SerializeField]
+    protected CameraDolly camera;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -34,6 +37,7 @@ public class MainMenu : MonoBehaviour
         titleImage.SetActive(true);
         settingsMenu.SetActive(false);
         controlsMenu.SetActive(false);
+        settingsMenu.GetComponent<Settings>().Setup();
     }
 
     public void ExitPressed() {
@@ -55,6 +59,7 @@ public class MainMenu : MonoBehaviour
     public void PlayPressed() {
         mainMenu.SetActive(false);
         titleImage.SetActive(false);
+        camera.StartGame();
         GameManager.Instance.StartGame();
     }
 

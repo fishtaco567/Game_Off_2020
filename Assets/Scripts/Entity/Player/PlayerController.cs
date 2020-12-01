@@ -86,7 +86,7 @@ public class PlayerController : FallBody {
     float currentHoverTime;
 
     [SerializeField]
-    float currentTakeoffWaitTime;
+    public float currentTakeoffWaitTime;
     [SerializeField]
     float currentTakeoffTime;
 
@@ -149,7 +149,7 @@ public class PlayerController : FallBody {
     //Input
     private bool jumpPressed;
     private bool jumpHeld;
-    private bool takeoffHeld;
+    public bool takeoffHeld;
     private float horizontalIn;
     private float verticalIn;
     private bool interactPressed;
@@ -302,6 +302,7 @@ public class PlayerController : FallBody {
         grounded = CheckJump();
 
         if(!wasGroundedLastFrame && grounded && timeUngrounded > 0.3f) {
+            cam.GetComponentInParent<CameraDolly>().Land();
             landAudioSource.Play();
         }
 
@@ -356,6 +357,7 @@ public class PlayerController : FallBody {
                 currentTakeoffWaitTime += Time.fixedDeltaTime;
                 //TODO camera
             } else {
+                cam.GetComponentInParent<CameraDolly>().TakeOff();
                 takingOff = true;
             }
 
@@ -386,7 +388,7 @@ public class PlayerController : FallBody {
             }
             var rfMain = rocketFireParticleSystem.main;
             rfMain.startSize = 1.5f;
-            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.numFuel, ForceMode.Force);
+            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime), ForceMode.Force);
             currentTakeoffTime += Time.fixedDeltaTime;
 
             horizontalIn = 0;

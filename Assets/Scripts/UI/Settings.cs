@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.Audio;
 using UnityEngine.UI;
 
+
 public class Settings : MonoBehaviour {
 
     public float sfxVolume;
@@ -18,7 +19,7 @@ public class Settings : MonoBehaviour {
     Slider musicSlider;
 
     // Use this for initialization
-    void Start() {
+    public void Setup() {
         if(PlayerPrefs.HasKey("sfxvolume")) {
             sfxVolume = PlayerPrefs.GetFloat("sfxvolume");
         } else {
@@ -34,6 +35,8 @@ public class Settings : MonoBehaviour {
             PlayerPrefs.SetFloat("musicvolume", musicVolume);
         }
         musicSlider.value = musicVolume;
+
+        SetVolumes(sfxVolume, musicVolume);
     }
 
     private void SetVolumes(float sfx, float music) {
@@ -45,7 +48,7 @@ public class Settings : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-
+        SetVolumes(sfxVolume, musicVolume);
     }
 
     public void SFXVolumeChange(float volume) {
