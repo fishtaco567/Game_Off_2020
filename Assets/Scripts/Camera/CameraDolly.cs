@@ -63,7 +63,13 @@ public class CameraDolly : MonoBehaviour {
     [SerializeField]
     float transitionTime;
 
+    [SerializeField]
+    LineRenderer line;
+
     float stateTime;
+
+    [SerializeField]
+    float lineTime;
 
     Vector3 baseOffset {
         get{ return new Vector3(0, isLookingUp ? lookUpDistY : maxHeightFromPlayerFeet, isLookingUp ? lookUpDistX : -(minFollowDist + maxFollowDist) / 2); }
@@ -90,11 +96,26 @@ public class CameraDolly : MonoBehaviour {
         isLookingUp = false;
         stateTime = 10;
         state = CameraState.StartMenu;
+        lookingUpTime = 0;
     }
 
+    float lookingUpTime;
 
-	// Update is called once per frame
-	void LateUpdate () {
+    private void Update() {
+        if(isLookingUp) {
+            lookingUpTime += Time.deltaTime;
+            line.enabled = true;
+            line.endWidth = (lookingUpTime / lineTime) * 2 + 0.1f;
+            line.SetPosition(0, player.transform.position);
+            line.SetPosition(1, player.transform.position + player.transform.up * 270 * player.GetComponent<PlayerAbility>().numFuel * (lookingUpTime / lineTime));
+        } else {
+            lookingUpTime = 0;
+            line.enabled = false;
+        }
+    }
+
+    // Update is called once per frame
+    void LateUpdate () {
         stateTime += Time.deltaTime;
         var snapSpeed = Mathf.Lerp(transitionSnapSpeed, stateSnapSpeed, stateTime / transitionTime);
         switch(state) {

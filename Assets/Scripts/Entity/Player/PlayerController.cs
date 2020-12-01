@@ -388,7 +388,7 @@ public class PlayerController : FallBody {
             }
             var rfMain = rocketFireParticleSystem.main;
             rfMain.startSize = 1.5f;
-            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime), ForceMode.Force);
+            rigidbody.AddRelativeForce(Vector3.up * takeOffCurve.Evaluate(currentTakeoffTime) * ability.numFuel, ForceMode.Force);
             currentTakeoffTime += Time.fixedDeltaTime;
 
             horizontalIn = 0;
@@ -427,10 +427,9 @@ public class PlayerController : FallBody {
                 curForce -= forceTowardSlope;
             }
             rigidbody.AddForce(curForce, ForceMode.Force);
-        } else {
-            rigidbody.AddRelativeForce(Vector3.forward * faceDirection.magnitude * moveForce * speedup, ForceMode.Force);
-        }
+        } 
 
+        rigidbody.AddRelativeForce(Vector3.forward * faceDirection.magnitude * moveForce * speedup, ForceMode.Force);
         // turn the run particles on if on the ground and (control) moving
         runParticleEmission.enabled = (
             onTheGround && faceDirection != Vector3.zero && !onSlope
@@ -441,7 +440,7 @@ public class PlayerController : FallBody {
         if (faceDirection == Vector3.zero || onSlope) {
             faceDirection = Vector3.ProjectOnPlane(transform.forward, base.normal);
             footstepsAudioSource.Stop();
-        } else if (!footstepsAudioSource.isPlaying && !jumped && !onSlope) {
+        } else if (!footstepsAudioSource.isPlaying && !jumped && !onSlope && grounded) {
             footstepsAudioSource.Play();
         }
 
@@ -481,8 +480,8 @@ public class PlayerController : FallBody {
 
         animator.SetFloat("YSpeed", transform.InverseTransformVector(rigidbody.velocity).y);
 
-        if(!takingOff && transform.InverseTransformVector(rigidbody.velocity).y < -30) {
-            rigidbody.drag = 3f;
+        if(!takingOff && transform.InverseTransformVector(rigidbody.velocity).y < -75) {
+            rigidbody.drag = .9f;
         } else {
             rigidbody.drag = 0.1f;
         }

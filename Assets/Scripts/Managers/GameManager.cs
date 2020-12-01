@@ -19,6 +19,9 @@ public class GameManager : Singleton<GameManager> {
     }
 
     public void StartGame() {
+        if(hud == null) {
+            hud = GameObject.Find("UI").transform.Find("Canvas").Find("HUD").gameObject;
+        }
         hud.SetActive(true);
         isInMenu = false;
     }
